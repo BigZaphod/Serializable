@@ -90,7 +90,7 @@ Array<Dog>.enableSerialization()
 
 `Array`, `Set` and `Dictionary` conform to `Serializable` out of the box - but they are not automatically registered since they’re generic. You must register any combination that you intend to serialize so the system knows what to do with them when it encounters them. If you accidentally forget to register a type, you’ll get a `fatalError()` noting the missing type when you try to test your serialization code - so they're easy to find and fix.
 
-If you want to elimate some boilerplate, use the `AutomaticallyEncodedSerializable` protocol which has a default implementation of `encode(with:)` that uses `Mirror` to automatically name and encode all of the properties it finds. Using this, the example from above can be shortened to:
+If you want to eliminate some boilerplate, use the `AutomaticallyEncodedSerializable` protocol which has a default implementation of `encode(with:)` that uses `Mirror` to automatically name and encode all of the properties it finds. Using this, the example from above can be shortened to:
 
 ```Swift
 extension Dog : AutomaticallyEncodedSerializable {
@@ -112,13 +112,15 @@ protocol RestorableSerializable : Serializable {
 
 For types that conform to this protocol, the `restored(with:)` function is called after `init(with:)` has succeeded. This is most useful for class instances where you might need to restore a circular reference to `self` or something like that.
 
-Finally, there is the `makeClone()` function implemented in an extension for `Serializable`. This grants any `Serializable` value the ability to make a deep copy by encoding and then decoding itself and returning the result. The `makeClone()` function is more effecient than encoding to data and then decoding since it copies the internal state of the encode directly into the decoder - so if you want a deep copy, this is a decent way to get one.
+Finally, there is the `makeClone()` function implemented in an extension for `Serializable`. This grants any `Serializable` value the ability to make a deep copy by encoding and then decoding itself and returning the result. The `makeClone()` function is more efficient than encoding to data and then decoding since it copies the internal state of the encoder directly into the decoder - so if you want a deep copy, this is a decent way to get one.
 
 
 # Notes
 
 * The binary data format is pretty compact - it only stores string symbols once and, of course, only stores a single copy of a reference type instance. In my tests, it also seems to compress remarkably well.
+
 * The binary format should be cross platform - it always writes integers in little endian format, and always stores strings and symbols as UTF-8. The `Int` and `UInt` types (which can be either 32 or 64 bit) are both always stored as 64 bit.
+
 * If serializing classes, then superclasses and subclasses effectively share a flat namespace for the key names. Key name collisions when encoding or decoding will almost certainly result in a `fatalError()` due to an internal precondition explicitly designed to detect this sort of subtle bug before it becomes a problem for you later.
 
 * This is not yet well tested, of course, but it seems to work! Good luck!
